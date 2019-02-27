@@ -1,8 +1,18 @@
 #!/bin/bash
 
-#VARS
-tmp_dir="/tmp/"
+#OPTIONS
+#For better results  you will have to fill the lists with the info you have
+possible_usernames=(
+	"root"
+	"admin"
+)
 
+possible_domains=(
+	'127.0.0.1'
+	'localhost'
+)
+
+possible_network="192.168.0.0"
 
 function check_dependencies() {
 	dependencies_commands=(
@@ -91,10 +101,14 @@ function perform_tests() {
 	for port in "${OPEN_PORTS_ARRAY[@]}"; do
 		case "${port}" in
 			"53")
-				dns_checks
+				for dom in "${possible_domains[@]}";do
+					dns_checks "$dom" "${possible_network}"
+				done
 			;;
 			"443"|"445")
-				smb_checks
+				for user in "${possible_usernames[@]}"; do
+					smb_checks "${user}" 
+				done
 			;;
 			*)
 				if [ ! -z "${port}" ];then
@@ -112,24 +126,30 @@ function dns_checks() {
 	#Use a list of domains. Taken as input if transferzone is possible
 	echo '**** DNS CHECKS'
 	echo 'Check: Zone transfer'
-	command="host -l 127.0.0.1 ${ip}"
+	command="host -l $1 ${ip}"
 	print_green "Test: ${command}"
 	eval "${command}"
 
-	command="dig axfr localhost @${ip}"
+	command="dig axfr $1 @${ip}"
 	print_green "Test: ${command}"
 	eval "${command}"
 
-	command="dnsrecon -r 192.168.0.0/24 -n ${ip}"
+	command="dnsrecon -r $2/24 -n ${ip}"
 	print_green "Test: ${command}"
 	eval "${command}"
+	
+	
 
 }
 
 function smb_checks() {
 	echo '**** SMB CHECKS'
 	echo 'Check: SMB shared folders'
-	command="smbclient -L ${ip}"
+	command="msfconsole -x \" use auxiliary/scanner/smb/smb_version; set RHOSTS ${ip}; run; exit\""
+	print_green "Test: ${command}"
+	eval "${command}" | grep "${ip}"
+
+	command="smbclient -L ${ip} -U=root%toor "
 	print_green "Test: ${command}"
 	eval "${command}"
 
