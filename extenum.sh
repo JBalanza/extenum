@@ -109,24 +109,23 @@ function launch_nmap() {
 function perform_tests() {
 	for port in "${OPEN_PORTS_ARRAY[@]}"; do
 		case "${port}" in
-			"53")
-				for dom in "${possible_domains[@]}";do
-					dns_checks "$dom" "${possible_network}"
-				done
+			"21")
+				ftp_checks
 			;;
-			"445")
-				for user in "${possible_usernames[@]}"; do
-					smb_checks "${user}" 
-				done
+			"53")
+				dns_checks
 			;;
 			"80")
-				http_test "http://${ip}"
+			        http_test "http://${ip}"
+			;;
+			"443")
+                                http_test "https://${ip}"
+			;;
+			"445")
+				smb_checks
 			;;
 			"8080")
 			        http_test "http://${ip}:8080"
-			;;
-			"443")
-			        http_test "https://${ip}"
 			;;
 			*)
 				if [ ! -z "${port}" ];then
@@ -140,20 +139,28 @@ function perform_tests() {
 
 }
 
+function ftp_checks() {
+	echo '*** FTP CHECKS'
+
+}
+
 ###############     PROTOCOL TEST       ###########
 function dns_checks() {
 	#Use a list of domains. Taken as input if transferzone is possible
+
 	echo '**** DNS CHECKS'
 	echo 'Check: Zone transfer'
-	command="host -l $1 ${ip}"
-	print_green "Test: ${command}"
-	eval "${command}"
+	for dom in "${possible_domains[@]}"; do
+		command="host -l ${dom} ${ip}"
+		print_green "Test: ${command}"
+		eval "${command}"
 
-	command="dig axfr $1 @${ip}"
-	print_green "Test: ${command}"
-	eval "${command}"
+		#command="dig axfr $1 @${ip}"
+		#print_green "Test: ${command}"
+		#eval "${command}"
+	done
 
-	command="dnsrecon -r $2/24 -n ${ip}"
+	command="dnsrecon -r ${possible_network}/24 -n ${ip}"
 	print_green "Test: ${command}"
 	eval "${command}"
 
@@ -166,9 +173,11 @@ function smb_checks() {
 	print_green "Test: ${command}"
 	eval "${command}" | grep "${ip}"
 
-	command="smbclient -L ${ip} -U=$1%test "
-	print_green "Test: ${command}"
-	eval "${command}"
+	for user in "${possible_usernames[@]}"; do
+		command="smbclient -L ${ip} -U=${user}%test "
+		print_green "Test: ${command}"
+		eval "${command}"
+	done
 
 	command="enum4linux ${ip}"
 	print_green "Test: ${command}"
