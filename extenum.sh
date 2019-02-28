@@ -72,7 +72,7 @@ function print_error() {
 
 }
 
-function print_green(){
+function print_yellow(){
 	echo -e "\e[33m$1\e"
 	echo -e "\e[1;0m"
 
@@ -97,7 +97,7 @@ function parse_arguments() {
 
 function launch_nmap() {
 	#TODO detect also UDP
-	echo -e "\nLaunching Nmap"
+	print_yellow "\nLaunching Nmap"
 
 	nmap_command="nmap -sV ${ip}"
 	nmap_result="$(${nmap_command})"
@@ -106,7 +106,7 @@ function launch_nmap() {
 
 	echo "${nmap_result}" | grep -Eo '[0-9]{1,5}.*$'
 
-	echo -e "Finished. Discovered: ${OPEN_PORTS_ARRAY[*]}\n"
+	print_yellow "Finished. Discovered: ${OPEN_PORTS_ARRAY[*]}"
 
 
 }
@@ -121,16 +121,16 @@ function perform_tests() {
 				dns_checks
 			;;
 			"80")
-			        http_test "http://${ip}"
+			        http_checks "http://${ip}"
 			;;
 			"443")
-                                http_test "https://${ip}"
+                                http_checks "https://${ip}"
 			;;
 			"445")
 				smb_checks
 			;;
 			"8080")
-			        http_test "http://${ip}:8080"
+			        http_checks "http://${ip}:8080"
 			;;
 			*)
 				if [ ! -z "${port}" ];then
@@ -145,10 +145,10 @@ function perform_tests() {
 }
 
 function ftp_checks() {
-	echo '*** FTP CHECKS'
-	echo 'Check: FTP anonymous login'
+	print_yellow '**** FTP CHECKS'
+	print_yellow 'Check: FTP anonymous login'
 	command="msfconsole -x \" use auxiliary/scanner/ftp/anonymous; set RHOSTS ${ip}; run; exit\""
-	print_green "Test: ${command}"
+	print_yellow "Test: ${command}"
 	eval "${command}" | grep "${ip}"
 
 }
@@ -157,47 +157,49 @@ function ftp_checks() {
 function dns_checks() {
 	#Use a list of domains. Taken as input if transferzone is possible
 
-	echo '**** DNS CHECKS'
-	echo 'Check: Zone transfer'
+	print_yellow '**** DNS CHECKS'
+	print_yellow 'Check: Zone transfer'
 	for dom in "${possible_domains[@]}"; do
 		command="host -l ${dom} ${ip}"
-		print_green "Test: ${command}"
+		print_yellow "Test: ${command}"
 		eval "${command}"
 
 		#command="dig axfr $1 @${ip}"
-		#print_green "Test: ${command}"
+		#print_yellow "Test: ${command}"
 		#eval "${command}"
 	done
 
 	command="dnsrecon -r ${possible_network}/24 -n ${ip}"
-	print_green "Test: ${command}"
+	print_yellow "Test: ${command}"
 	eval "${command}"
 
 }
 
 function smb_checks() {
-	echo '**** SMB CHECKS'
-	echo 'Check: SMB shared folders'
+	print_yellow '**** SMB CHECKS'
+	print_yellow 'Check: SMB shared folders'
 	command="msfconsole -x \" use auxiliary/scanner/smb/smb_version; set RHOSTS ${ip}; run; exit\""
-	print_green "Test: ${command}"
+	print_yellow "Test: ${command}"
 	eval "${command}" | grep "${ip}"
 
 	for user in "${possible_usernames[@]}"; do
 		command="smbclient -L ${ip} -U=${user}%test "
-		print_green "Test: ${command}"
+		print_yellow "Test: ${command}"
 		eval "${command}"
 	done
 
 	command="enum4linux ${ip}"
-	print_green "Test: ${command}"
+	print_yellow "Test: ${command}"
 	eval "${command}"
 
 }
 
 function http_checks() {
-	echo '**** HTTP CHECKS'
-	echo 'Check: Enumerate web directories'
+	print_yellow '**** HTTP CHECKS'
+	print_yellow 'Check: Enumerate web directories'
 	command="dirsearch -u $1 -e asp,aspx,html,php,txt,jpg,png,old,bak,zip,json,xml,xls,csv,tsv -f -r"
+	print_yellow  "Test: ${command}"
+	eval "$command"
 }
 
 function main() {

@@ -8,6 +8,10 @@ Script for perform automatic tests given an ip
 
 # Tests
 
+## FTP
+
+* FTP anonymous login
+
 ## DNS
 
 * DNS Transfer zone
