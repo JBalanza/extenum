@@ -79,7 +79,7 @@ function print_green(){
 }
 
 function print_usage() {
-	echo -e "Usage:\t" $0 "<device_ip_address>"
+	echo -e "Usage:\t $0 <device_ip_address>"
 	exit 1
 
 }
@@ -99,10 +99,15 @@ function launch_nmap() {
 	#TODO detect also UDP
 	echo -e "\nLaunching Nmap"
 
-	nmap_command="nmap ${ip}"
-	open_ports="$(${nmap_command} | grep -Eo '[0-9]{1,5}/tcp' | sed 's@/tcp@\n@g')"
+	nmap_command="nmap -sV ${ip}"
+	nmap_result="$(${nmap_command})"
+	open_ports="$(echo \"${nmap_result}\" | grep -Eo '[0-9]{1,5}/tcp' | sed 's@/tcp@\n@g')"
 	readarray -t OPEN_PORTS_ARRAY < <(echo "${open_ports}" 2> /dev/null) &>/dev/null
+
+	echo "${nmap_result}" | grep -Eo '[0-9]{1,5}.*$'
+
 	echo -e "Finished. Discovered: ${OPEN_PORTS_ARRAY[*]}\n"
+
 
 }
 
@@ -141,6 +146,10 @@ function perform_tests() {
 
 function ftp_checks() {
 	echo '*** FTP CHECKS'
+	echo 'Check: FTP anonymous login'
+	command="msfconsole -x \" use auxiliary/scanner/ftp/anonymous; set RHOSTS ${ip}; run; exit\""
+	print_green "Test: ${command}"
+	eval "${command}" | grep "${ip}"
 
 }
 
