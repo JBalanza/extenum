@@ -29,6 +29,7 @@ function check_dependencies() {
 		"cut"
 		"readarray"
 		"enum4linux"
+		"dirsearch"
 	)
 
 	dependencies_packets=(
@@ -61,21 +62,25 @@ function check_dependencies() {
 		print_error "Please install the missing dependencies before continuing"
 		exit 1
 	fi
+
 }
 
 function print_error() {
 	echo -e "\e[31m$1\e"
 	echo -e "\e[1;0m"
+
 }
 
 function print_green(){
 	echo -e "\e[33m$1\e"
 	echo -e "\e[1;0m"
+
 }
 
 function print_usage() {
 	echo -e "Usage:\t" $0 "<device_ip_address>"
 	exit 1
+
 }
 
 function parse_arguments() {
@@ -88,6 +93,7 @@ function parse_arguments() {
 	fi
 }
 
+
 function launch_nmap() {
 	#TODO detect also UDP
 	echo -e "\nLaunching Nmap"
@@ -96,6 +102,7 @@ function launch_nmap() {
 	open_ports="$(${nmap_command} | grep -Eo '[0-9]{1,5}/tcp' | sed 's@/tcp@\n@g')"
 	readarray -t OPEN_PORTS_ARRAY < <(echo "${open_ports}" 2> /dev/null) &>/dev/null
 	echo -e "Finished. Discovered: ${OPEN_PORTS_ARRAY[*]}\n"
+
 }
 
 function perform_tests() {
@@ -106,10 +113,19 @@ function perform_tests() {
 					dns_checks "$dom" "${possible_network}"
 				done
 			;;
-			"443"|"445")
+			"445")
 				for user in "${possible_usernames[@]}"; do
 					smb_checks "${user}" 
 				done
+			;;
+			"80")
+				http_test "http://${ip}"
+			;;
+			"8080")
+			        http_test "http://${ip}:8080"
+			;;
+			"443")
+			        http_test "https://${ip}"
 			;;
 			*)
 				if [ ! -z "${port}" ];then
@@ -120,6 +136,7 @@ function perform_tests() {
 
 
 	done
+
 }
 
 ###############     PROTOCOL TEST       ###########
@@ -138,8 +155,6 @@ function dns_checks() {
 	command="dnsrecon -r $2/24 -n ${ip}"
 	print_green "Test: ${command}"
 	eval "${command}"
-	
-	
 
 }
 
@@ -157,6 +172,13 @@ function smb_checks() {
 	command="enum4linux ${ip}"
 	print_green "Test: ${command}"
 	eval "${command}"
+
+}
+
+function http_checks() {
+	echo '**** HTTP CHECKS'
+	echo 'Check: Enumerate web directories'
+	command="dirsearch -u $1 -e asp,aspx,html,php,txt,jpg,png,old,bak,zip,json,xml,xls,csv,tsv -f"
 }
 
 function main() {
@@ -164,6 +186,7 @@ function main() {
 	parse_arguments "$@"
 	launch_nmap
 	perform_tests
+
 }
 
 ################      MAIN      ################
