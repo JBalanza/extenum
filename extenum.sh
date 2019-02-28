@@ -5,6 +5,7 @@
 possible_usernames=(
 	"root"
 	"admin"
+	"guest"
 )
 
 possible_domains=(
@@ -165,7 +166,7 @@ function smb_checks() {
 	print_green "Test: ${command}"
 	eval "${command}" | grep "${ip}"
 
-	command="smbclient -L ${ip} -U=root%toor "
+	command="smbclient -L ${ip} -U=$1%test "
 	print_green "Test: ${command}"
 	eval "${command}"
 
@@ -178,7 +179,7 @@ function smb_checks() {
 function http_checks() {
 	echo '**** HTTP CHECKS'
 	echo 'Check: Enumerate web directories'
-	command="dirsearch -u $1 -e asp,aspx,html,php,txt,jpg,png,old,bak,zip,json,xml,xls,csv,tsv -f"
+	command="dirsearch -u $1 -e asp,aspx,html,php,txt,jpg,png,old,bak,zip,json,xml,xls,csv,tsv -f -r"
 }
 
 function main() {
