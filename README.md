@@ -13,3 +13,4 @@ Script for perform automatic tests given an ip
 ## SMB
 
 * SMB recon
+** enum4linux

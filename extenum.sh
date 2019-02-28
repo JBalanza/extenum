@@ -28,6 +28,7 @@ function check_dependencies() {
 		"nmap"
 		"cut"
 		"readarray"
+		"enum4linux"
 	)
 
 	dependencies_packets=(
@@ -153,6 +154,9 @@ function smb_checks() {
 	print_green "Test: ${command}"
 	eval "${command}"
 
+	command="enum4linux ${ip}"
+	print_green "Test: ${command}"
+	eval "${command}"
 }
 
 function main() {
